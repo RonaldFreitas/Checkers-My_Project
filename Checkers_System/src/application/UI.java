@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
-import checkers.checkersMatch;
-import checkers.checkersPiece;
-import checkers.checkersPosition;
+import checkers.CheckersMatch;
+import checkers.CheckersPiece;
+import checkers.CheckersPosition;
 import checkers.Color;
 
 public class UI {
@@ -93,33 +93,33 @@ public class UI {
 	
 	private static void printPiece(CheckersPiece piece, boolean background) {
 		if (background) {
-			System.out.print(ANSI_CYAN_BACKGROUND);
+			System.out.print(ANSI_WHITE_BACKGROUND);
 		}
 		if (piece == null) {
 			System.out.print("-" + ANSI_RESET);
 		}
 		else {
-			if (piece.getColor() == Color.BLUE) {
-                System.out.print(ANSI_BLUE + piece + ANSI_RESET);
+			if (piece.getColor() == Color.CYAN) {
+                System.out.print(ANSI_CYAN + piece + ANSI_RESET);
             }
             else {
-                System.out.print(ANSI_RED + piece + ANSI_RESET);
+                System.out.print(ANSI_PURPLE + piece + ANSI_RESET);
             }
 		}
 		System.out.print(" ");
 	}
 	
 	private static void printCapturedPieces(List<CheckersPiece> captured) {
-		List<CheckersPiece> blue = captured.stream().filter(x -> x.getColor() == Color.BLUE).collect(Collectors.toList());
-		List<CheckersPiece> red = captured.stream().filter(x -> x.getColor() == Color.RED).collect(Collectors.toList());
+		List<CheckersPiece> cyan = captured.stream().filter(x -> x.getColor() == Color.CYAN).collect(Collectors.toList());
+		List<CheckersPiece> purple = captured.stream().filter(x -> x.getColor() == Color.PURPLE).collect(Collectors.toList());
 		System.out.println("Captured pieces: ");
-		System.out.print("Blue: ");
-		System.out.print(ANSI_BLUE);
-		System.out.println(Arrays.toString(blue.toArray()));
+		System.out.print("Cyan: ");
+		System.out.print(ANSI_CYAN);
+		System.out.println(Arrays.toString(cyan.toArray()));
 		System.out.print(ANSI_RESET);
-		System.out.print("Red: ");
-		System.out.print(ANSI_RED);
-		System.out.println(Arrays.toString(red.toArray()));
+		System.out.print("Purple: ");
+		System.out.print(ANSI_PURPLE);
+		System.out.println(Arrays.toString(purple.toArray()));
 		System.out.print(ANSI_RESET);
 		
 	}

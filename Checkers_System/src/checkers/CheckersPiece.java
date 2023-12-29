@@ -30,12 +30,12 @@ public abstract class CheckersPiece extends Piece{
 		moveCount--;
 	}
 	
-	public checkersPosition getcheckersPosition() {
-		return checkersPosition.fromPosition(position);
+	public CheckersPosition getcheckersPosition() {
+		return CheckersPosition.fromPosition(position);
 	}
 	
 	protected boolean isThereOpponentPiece(Position position) {
-		checkersPiece p = (checkersPiece)getBoard().piece(position);
+		CheckersPiece p = (CheckersPiece)getBoard().piece(position);
 		return p != null && p.getColor() != color;
 	}
 }

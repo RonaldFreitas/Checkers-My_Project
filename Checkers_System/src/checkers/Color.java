@@ -1,6 +1,6 @@
 package checkers;
 
 public enum Color {
-	WHITE,
-	BLACK;
+	CYAN,
+	PURPLE;
 }
