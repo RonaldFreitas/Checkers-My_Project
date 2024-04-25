@@ -2,21 +2,19 @@ package checkers;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import boardGame.Board;
 import boardGame.Piece;
 import boardGame.Position;
-import checkers.pieces.Queen;
 import checkers.pieces.Dame;
+import checkers.pieces.Queen;
 
 public class CheckersMatch {
 
 	private int turn;
 	private Color currentPlayer;
 	private Board board;
-	private boolean check;
-	private boolean checkMate;
+	private boolean end;
 	private CheckersPiece promoted;
 	
 	private List<Piece> piecesOnTheBoard = new ArrayList<>();
@@ -33,16 +31,12 @@ public class CheckersMatch {
 		return turn;
 	}
 	
+	public boolean getEnd() {
+		return end;
+	}
+	
 	public Color getCurrentPlayer() {
 		return currentPlayer;
-	}
-	
-	public boolean getCheck() {
-		return check;
-	}
-	
-	public boolean getCheckMate() {
-		return checkMate;
 	}
 	
 	public CheckersPiece getPromoted() {
@@ -71,54 +65,41 @@ public class CheckersMatch {
 		validateSourcePosition(source);
 		validateTargetPosition(source, target);
 		Piece capturedPiece = makeMove(source, target);
-		
-		if (testCheck(currentPlayer)) {
-			undoMove(source,target,capturedPiece);
-			throw new CheckersException("You can't put yourself in check");
-		}
-		
 		CheckersPiece movedPiece = (CheckersPiece)board.piece(target);
 		
 		// #specialmove promotion
 		promoted = null;
-		if (movedPiece instanceof Pawn) {
+		if (movedPiece instanceof Dame) {
 			if ((movedPiece.getColor() == Color.CYAN && target.getRow() == 0) || (movedPiece.getColor() == Color.PURPLE && target.getRow() == 7)) {
 				promoted = (CheckersPiece)board.piece(target);
-				promoted = replacePromotedPiece("L");
+				promoted = replacePromotedPiece();
 			}
 		}
 		
-		check = (testCheck(opponent(currentPlayer))) ? true : false;
+		boolean checkWinCondition = piecesOnTheBoard.stream().noneMatch(piece -> ((CheckersPiece) piece).getColor() == opponent(movedPiece.getColor()));
 		
-		if (testCheckMate(opponent(currentPlayer))) {
-			checkMate = true;
-		}
-		else {
+		if (checkWinCondition) {
+			end = true;
+		} else {
 			nextTurn();
-		}		
+		}
 		return (CheckersPiece)capturedPiece;
 	}
 	
-	public CheckersPiece replacePromotedPiece(String type) {
-		if (promoted == null) {
-			throw new IllegalStateException("There is no piece to be promoted");
-		}
-		if (!type.equals("B") && !type.equals("L") && !type.equals("H") && !type.equals("R")) {
-			return promoted;
-		}
+	public CheckersPiece replacePromotedPiece() {
 		
 		Position pos = promoted.getcheckersPosition().toPosition();
 		Piece p = board.removePiece(pos);
 		piecesOnTheBoard.remove(p);
 		
-		CheckersPiece newPiece = newPiece(type, promoted.getColor());
+		CheckersPiece newPiece = newPiece(promoted.getColor());
 		board.placePiece(newPiece, pos);
 		piecesOnTheBoard.add(newPiece);
 		
 		return newPiece;
 	}
 	
-	private CheckersPiece newPiece(String type, Color color) {
+	private CheckersPiece newPiece(Color color) {
 		return new Queen(board, color);
 	}
 	
@@ -133,18 +114,6 @@ public class CheckersMatch {
 			capturedPieces.add(capturedPiece);
 		}
 		return capturedPiece;
-	}
-	
-	private void undoMove(Position source, Position target, Piece capturedPiece) {
-		CheckersPiece p = (CheckersPiece)board.removePiece(target);
-		p.decreaseMoveCount();
-		board.placePiece(p, source);
-		
-		if (capturedPiece != null) {
-			board.placePiece(capturedPiece, target);
-			capturedPieces.remove(capturedPiece);
-			piecesOnTheBoard.add(capturedPiece);
-		}
 	}
 	
 	private void validateSourcePosition(Position position) {
@@ -167,58 +136,11 @@ public class CheckersMatch {
 	
 	private void nextTurn() {
 		turn++;
-		currentPlayer = (currentPlayer == Color.CYAN) ? Color.PURPLE : Color.PURPLE;
+		currentPlayer = (currentPlayer == Color.CYAN) ? Color.PURPLE : Color.CYAN;
 	}
 	
 	private Color opponent (Color color) {
-		return (color == Color.PURPLE) ? Color.PURPLE : Color.CYAN;
-	}
-	
-	private CheckersPiece king(Color color) {
-		List<Piece> list = piecesOnTheBoard.stream().filter(x -> ((CheckersPiece)x).getColor() == color).collect(Collectors.toList());
-		for (Piece p : list) {
-			if(p instanceof King) {
-				return (CheckersPiece)p;
-			}
-		}
-		throw new IllegalStateException("There is no " + color + " king on the board");
-	}
-	
-	private boolean testCheck(Color color) {
-		Position kingPosition = king(color).getcheckersPosition().toPosition();
-		List<Piece> opponentPieces = piecesOnTheBoard.stream().filter(x -> ((CheckersPiece)x).getColor() == opponent(color)).collect(Collectors.toList());
-		for (Piece p : opponentPieces) {
-			boolean[][] mat = p.possibleMoves();
-			if (mat[kingPosition.getRow()][kingPosition.getColumn()]) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	private boolean testCheckMate(Color color) {
-		if (!testCheck(color)) {
-			return false;
-		}
-		List<Piece> list = piecesOnTheBoard.stream().filter(x -> ((CheckersPiece)x).getColor() == color).collect(Collectors.toList());
-		for (Piece p : list) {
-			boolean[][] mat = p.possibleMoves();
-			for (int i = 0; i < board.getRows(); i++) {
-				for (int j = 0; j < board.getColumns(); j++) {
-					if (mat[i][j]) {
-						Position source = ((CheckersPiece)p).getcheckersPosition().toPosition();
-						Position target = new Position(i,j);
-						Piece capturedPiece = makeMove(source, target);
-						boolean testCheck = testCheck(color);
-						undoMove(source, target, capturedPiece);
-						if (!testCheck) {
-							return false;
-						}
-					}
-				}
-			}
-		}
-		return true;
+		return (color == Color.CYAN) ? Color.PURPLE : Color.CYAN;
 	}
 	
 	private void placeNewPiece(char column, int row, CheckersPiece piece) {
@@ -228,37 +150,29 @@ public class CheckersMatch {
 	
 	private void initialSetup() {
 		placeNewPiece('a', 1, new Dame(board, Color.CYAN));
-		placeNewPiece('b', 1, new Dame(board, Color.CYAN));
 		placeNewPiece('c', 1, new Dame(board, Color.CYAN));
-		placeNewPiece('d', 1, new Dame(board, Color.CYAN));
 		placeNewPiece('e', 1, new Dame(board, Color.CYAN));
-		placeNewPiece('f', 1, new Dame(board, Color.CYAN));
 		placeNewPiece('g', 1, new Dame(board, Color.CYAN));
-		placeNewPiece('h', 1, new Dame(board, Color.CYAN));
-        placeNewPiece('a', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('b', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('c', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('d', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('e', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('f', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('g', 2, new Dame(board, Color.CYAN));
-        placeNewPiece('h', 2, new Dame(board, Color.CYAN));
+		placeNewPiece('b', 2, new Dame(board, Color.CYAN));
+		placeNewPiece('d', 2, new Dame(board, Color.CYAN));
+		placeNewPiece('f', 2, new Dame(board, Color.CYAN));
+		placeNewPiece('h', 2, new Dame(board, Color.CYAN));
+        placeNewPiece('a', 3, new Dame(board, Color.CYAN));
+        placeNewPiece('c', 3, new Dame(board, Color.CYAN));
+        placeNewPiece('e', 3, new Dame(board, Color.CYAN));
+        placeNewPiece('g', 3, new Dame(board, Color.CYAN));
 
-        placeNewPiece('a', 8, new Dame(board, Color.PURPLE));
         placeNewPiece('b', 8, new Dame(board, Color.PURPLE));
-        placeNewPiece('c', 8, new Dame(board, Color.PURPLE));
         placeNewPiece('d', 8, new Dame(board, Color.PURPLE));
-        placeNewPiece('e', 8, new Dame(board, Color.PURPLE));
         placeNewPiece('f', 8, new Dame(board, Color.PURPLE));
-        placeNewPiece('g', 8, new Dame(board, Color.PURPLE));
         placeNewPiece('h', 8, new Dame(board, Color.PURPLE));
         placeNewPiece('a', 7, new Dame(board, Color.PURPLE));
-        placeNewPiece('b', 7, new Dame(board, Color.PURPLE));
         placeNewPiece('c', 7, new Dame(board, Color.PURPLE));
-        placeNewPiece('d', 7, new Dame(board, Color.PURPLE));
         placeNewPiece('e', 7, new Dame(board, Color.PURPLE));
-        placeNewPiece('f', 7, new Dame(board, Color.PURPLE));
         placeNewPiece('g', 7, new Dame(board, Color.PURPLE));
-        placeNewPiece('h', 7, new Dame(board, Color.PURPLE));
+        placeNewPiece('b', 6, new Dame(board, Color.PURPLE));
+        placeNewPiece('d', 6, new Dame(board, Color.PURPLE));
+        placeNewPiece('f', 6, new Dame(board, Color.PURPLE));
+        placeNewPiece('h', 6, new Dame(board, Color.PURPLE));
 	}
 }

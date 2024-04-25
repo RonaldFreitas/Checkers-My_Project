@@ -57,14 +57,9 @@ public class UI {
 			printCapturedPieces(captured);
 			System.out.println();
 			System.out.println("Turn: " + checkersMatch.getTurn());
-			if (!checkersMatch.getCheckMate()) {
+			if (!checkersMatch.getEnd()) {
 				System.out.println("Waiting Player: " + checkersMatch.getCurrentPlayer());
-				if (checkersMatch.getCheck()) {
-					System.out.println("CHECK!");
-				}	
-			}
-			else {
-				System.out.println("CHECKMATE!");
+			}if (checkersMatch.getEnd()) {
 				System.out.println("Winner: " + checkersMatch.getCurrentPlayer());
 			}
 		}
@@ -93,7 +88,7 @@ public class UI {
 	
 	private static void printPiece(CheckersPiece piece, boolean background) {
 		if (background) {
-			System.out.print(ANSI_WHITE_BACKGROUND);
+			System.out.print(ANSI_GREEN_BACKGROUND);
 		}
 		if (piece == null) {
 			System.out.print("-" + ANSI_RESET);

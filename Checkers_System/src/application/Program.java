@@ -18,7 +18,7 @@ public class Program {
 		CheckersMatch checkersMatch = new CheckersMatch();
 		List<CheckersPiece> captured = new ArrayList<>();
 		
-		while (!checkersMatch.getCheckMate()) {
+		while (!checkersMatch.getEnd()) {
 			try {
 				UI.clearScreen();
 				UI.printMatch(checkersMatch, captured);
@@ -40,13 +40,7 @@ public class Program {
 				}
 				
 				if (checkersMatch.getPromoted() != null) {
-					System.out.println("Enter piece for promotion (B/H/R/L): ");
-					String type = sc.nextLine().toUpperCase();
-					while (!type.equals("B") && !type.equals("L") && !type.equals("H") && !type.equals("R")) {
-						System.out.println("Invalid value! Enter piece for promotion (B/H/R/L): ");
-						type = sc.nextLine().toUpperCase();
-					}
-					checkersMatch.replacePromotedPiece(type);
+					checkersMatch.replacePromotedPiece();
 				}
 			}
 			catch(CheckersException e) {
